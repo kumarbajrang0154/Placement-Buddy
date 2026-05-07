@@ -1,5 +1,11 @@
-import dotenv from 'dotenv';
-dotenv.config();
+let dotenv;
+try {
+  dotenv = await import('dotenv');
+  dotenv.config();
+} catch (err) {
+  console.error('⚠️  dotenv package not installed. Run `npm install` in server folder.');
+  process.exit(1);
+}
 
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
 console.log('Length:', process.env.GEMINI_API_KEY?.length);

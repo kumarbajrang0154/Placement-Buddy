@@ -55,10 +55,10 @@ export default function Profile() {
     const uploadedFile = e.target.files?.[0];
     if (!uploadedFile) return;
 
-    // Validate file type
-    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Validate file type (backend only supports PDF)
+    const validTypes = ['application/pdf'];
     if (!validTypes.includes(uploadedFile.type)) {
-      setError('Please upload a PDF or DOCX file');
+      setError('Please upload a PDF file');
       return;
     }
 
@@ -77,11 +77,8 @@ export default function Profile() {
     formDataUpload.append('resume', uploadedFile);
 
     try {
-      const response = await api.post('/profile/upload-resume', formDataUpload, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // when sending FormData with axios, let it set the content-type header
+      const response = await api.post('/profile/upload-resume', formDataUpload);
 
       const atsData = response.data.data;
 

@@ -46,6 +46,16 @@ async function apiCall(method, endpoint, data = null, useAuth = false) {
 async function runTests() {
   console.log('🧪 Starting API Tests...\n');
 
+  // ensure server is running
+  try {
+    const healthCheck = await fetch('http://localhost:5000/health');
+    if (!healthCheck.ok) throw new Error('health endpoint returned ' + healthCheck.status);
+  } catch (err) {
+    console.error('❌ Unable to reach backend at http://localhost:5000.');
+    console.error('   Please start the server before running tests (e.g. `cd server && npm run dev`).');
+    process.exit(1);
+  }
+
   // Test 1: Health Check
   console.log('📍 Test 1: Health Check');
   const health = await fetch('http://localhost:5000/health');

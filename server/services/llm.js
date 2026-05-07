@@ -22,13 +22,12 @@ if (fs.existsSync(windowsPython)) {
 } else if (fs.existsSync(unixPython)) {
   venvPython = unixPython;
 } else {
-  // Critical: Don't fallback to system Python - it won't have required packages
-  throw new Error(
-    'Python virtual environment not found. Please run:\n' +
-    '  python3 -m venv venv\n' +
-    '  source venv/bin/activate  # On Windows: venv\\Scripts\\activate\n' +
-    '  pip install groq PyPDF2'
+  // Virtual environment not found; fall back to system python but warn user
+  console.warn(
+    '⚠️  Python virtual environment not found. Falling back to system python. ' +
+    'LLM features may fail if dependencies (groq, PyPDF2) are not installed.'
   );
+  venvPython = 'python';
 }
 
 const encodePayload = (payload) =>

@@ -3,7 +3,13 @@
  * Tests the actual HTTP endpoints
  */
 
-import axios from 'axios';
+let axios;
+try {
+  axios = (await import('axios')).default;
+} catch (err) {
+  console.error('⚠️  axios package not installed. Run `npm install` in server folder.');
+  process.exit(1);
+}
 
 const API_URL = 'http://localhost:5000/api';
 let authToken = '';

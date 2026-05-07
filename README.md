@@ -29,23 +29,31 @@ A complete placement preparation platform that helps students get placement-read
 ### 1. Backend Setup
 
 ```bash
-# Install dependencies
+# Install dependencies (run inside the server folder)
 cd server
 npm install
-
-# Server will start automatically with nodemon
-# Already running on http://localhost:5000
 ```
+
+The backend is an ES module project; make sure you run it from the `server` directory. You can start the server manually with `npm run dev` or `node server.js`.  The API will be available at `http://localhost:5000`.
+
+The Node server will attempt to locate a Python virtual environment under `venv`. If the venv is missing it will still start, but any AI/ATS-related features will log warnings and require a system Python installation with the necessary packages. To prepare the venv:
+
+```bash
+python3 -m venv ../venv   # creates the venv at the project root
+# macOS/Linux
+source ../venv/bin/activate
+# Windows
+..\venv\Scripts\activate
+pip install groq PyPDF2
+```
+
+You can verify the environment by running the included tests (see section below).
 
 ### 2. Python LLM Service
 
-```bash
-# Activate virtual environment (already set up)
-source venv/bin/activate
+The Python scripts (`llm_service.py`, `ats_service.py`) power the AI features. They expect a virtual environment with the `groq` and `PyPDF2` packages installed. Activate the venv as shown above before running backend endpoints that call these scripts.
 
-# The llm_service.py is already configured with Groq API
-# No additional setup needed
-```
+If you prefer not to set up Python, the backend will still run; however calls to `/action-plan`, `/profile/upload-resume`, `/mock-interview`, and `/career-coach` will return errors or default values.
 
 ### 3. Frontend Setup
 

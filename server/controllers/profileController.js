@@ -10,8 +10,25 @@ const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '../..');
-const pythonScript = path.join(projectRoot, 'ats_service_enhanced.py');
-const venvPython = path.join(projectRoot, 'venv/bin/python');
+// Prefer the enhanced ATS service if it exists, otherwise fall back to the original
+let pythonScript = path.join(projectRoot, 'ats_service_enhanced.py');
+if (!fs.existsSync(pythonScript)) {
+  pythonScript = path.join(projectRoot, 'ats_service.py');
+}
+
+// Determine python executable inside virtual environment (cross-platform)
+const unixPython = path.join(projectRoot, 'venv', 'bin', 'python');
+const windowsPython = path.join(projectRoot, 'venv', 'Scripts', 'python.exe');
+let venvPython;
+if (fs.existsSync(windowsPython)) {
+  venvPython = windowsPython;
+} else if (fs.existsSync(unixPython)) {
+  venvPython = unixPython;
+} else {
+  // if venv not found, we'll try to use system python but warn the user
+  console.warn('⚠️  Python virtual environment not found. Falling back to system python.');
+  venvPython = 'python';
+}
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(projectRoot, 'server/uploads');
@@ -28,35 +45,33 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Update all profile fields
-    user.profile = {
-      // Basic Info
-      year: profileData.year || user.profile.year,
-      branch: profileData.branch || user.profile.branch,
-      targetRole: profileData.targetRole || user.profile.targetRole,
-      skills: profileData.skills || user.profile.skills,
-      hoursPerWeek: profileData.hoursPerWeek || user.profile.hoursPerWeek,
-      
-      // Contact Info
-      phone: profileData.phone || user.profile.phone,
-      location: profileData.location || user.profile.location,
-      linkedin: profileData.linkedin || user.profile.linkedin,
-      github: profileData.github || user.profile.github,
-      portfolio: profileData.portfolio || user.profile.portfolio,
-      
-      // Comprehensive Data
-      education: profileData.education || user.profile.education || [],
-      experience: profileData.experience || user.profile.experience || [],
-      projects: profileData.projects || user.profile.projects || [],
-      certifications: profileData.certifications || user.profile.certifications || [],
-      achievements: profileData.achievements || user.profile.achievements || [],
-      languages: profileData.languages || user.profile.languages || [],
-      
-      // ATS Data
-      atsScore: profileData.atsScore !== undefined ? profileData.atsScore : user.profile.atsScore,
-      atsIssues: profileData.atsIssues || user.profile.atsIssues || [],
-      atsTips: profileData.atsTips || user.profile.atsTips || []
-    };
+    // Helper that returns value only if provided (including empty array/string)
+    const provided = (key) => Object.prototype.hasOwnProperty.call(profileData, key);
+
+    // Merge updated fields without wiping unspecified data
+    user.profile.year = provided('year') ? profileData.year : user.profile.year;
+    user.profile.branch = provided('branch') ? profileData.branch : user.profile.branch;
+    user.profile.targetRole = provided('targetRole') ? profileData.targetRole : user.profile.targetRole;
+    user.profile.skills = provided('skills') ? profileData.skills : user.profile.skills;
+    user.profile.hoursPerWeek = provided('hoursPerWeek') ? profileData.hoursPerWeek : user.profile.hoursPerWeek;
+
+    user.profile.phone = provided('phone') ? profileData.phone : user.profile.phone;
+    user.profile.location = provided('location') ? profileData.location : user.profile.location;
+    user.profile.linkedin = provided('linkedin') ? profileData.linkedin : user.profile.linkedin;
+    user.profile.github = provided('github') ? profileData.github : user.profile.github;
+    user.profile.portfolio = provided('portfolio') ? profileData.portfolio : user.profile.portfolio;
+
+    user.profile.education = provided('education') ? profileData.education : (user.profile.education || []);
+    user.profile.experience = provided('experience') ? profileData.experience : (user.profile.experience || []);
+    user.profile.projects = provided('projects') ? profileData.projects : (user.profile.projects || []);
+    user.profile.certifications = provided('certifications') ? profileData.certifications : (user.profile.certifications || []);
+    user.profile.achievements = provided('achievements') ? profileData.achievements : (user.profile.achievements || []);
+    user.profile.languages = provided('languages') ? profileData.languages : (user.profile.languages || []);
+
+    // ATS Data
+    user.profile.atsScore = provided('atsScore') ? profileData.atsScore : user.profile.atsScore;
+    user.profile.atsIssues = provided('atsIssues') ? profileData.atsIssues : (user.profile.atsIssues || []);
+    user.profile.atsTips = provided('atsTips') ? profileData.atsTips : (user.profile.atsTips || []);
 
     await user.save();
 
